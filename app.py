@@ -81,8 +81,16 @@ def main():
         comments = st.text_area("Comentarios")
 
         if st.button("Registrar Movimiento"):
-            new_row = pd.DataFrame([[str(uuid.uuid4()), date.strftime('%Y-%m-%d'), property_choice, tipo, concept, amount_ars, 0, comments]],
-                                   columns=ledger.columns)
+            new_row = pd.DataFrame([{
+                "id": str(uuid.uuid4()),
+                "date": date.strftime('%Y-%m-%d'),
+                "property": property_choice,
+                "type": tipo,
+                "concept": concept,
+                "amount_ars": amount_ars,
+                "amount_usd": 0,
+                "comments": comments
+            }])
             ledger = pd.concat([ledger, new_row], ignore_index=True)
             ledger.to_csv('ledger.csv', index=False)
             st.success("Movimiento registrado")
@@ -121,8 +129,16 @@ def main():
                 st.error("La cotización es obligatoria")
             else:
                 usd_bought = ars_to_use / usd_rate
-                new_row = pd.DataFrame([[str(uuid.uuid4()), datetime.now().strftime('%Y-%m-%d'), "General", "Egreso", "Compra de dólares", ars_to_use, usd_bought, ""]],
-                                       columns=ledger.columns)
+                new_row = pd.DataFrame([{
+                    "id": str(uuid.uuid4()),
+                    "date": datetime.now().strftime('%Y-%m-%d'),
+                    "property": "General",
+                    "type": "Egreso",
+                    "concept": "Compra de dólares",
+                    "amount_ars": ars_to_use,
+                    "amount_usd": usd_bought,
+                    "comments": ""
+                }])
                 ledger = pd.concat([ledger, new_row], ignore_index=True)
                 ledger.to_csv('ledger.csv', index=False)
                 st.success(f"Compra registrada: {format_number(ars_to_use)} ARS por {usd_bought:.2f} USD")
