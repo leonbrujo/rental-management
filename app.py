@@ -120,14 +120,16 @@ def main():
         st.subheader("Balance y Historial")
         st.write("Movimientos registrados:")
         st.dataframe(ledger)
-
+    
         total_ingresos = ledger[ledger['type'] == 'Ingreso']['amount_ars'].sum()
         total_egresos = ledger[ledger['type'] == 'Egreso']['amount_ars'].sum()
         balance_ars = total_ingresos - total_egresos
-
+        total_usd = ledger['amount_usd'].sum()
+    
         st.write(f"**Total Ingresos ARS:** {format_number(total_ingresos)}")
         st.write(f"**Total Egresos ARS:** {format_number(total_egresos)}")
         st.write(f"**Balance en ARS:** {format_number(balance_ars)}")
+        st.write(f"**Balance en USD:** {total_usd:.2f} USD")
 
     elif choice == "Eliminar Movimiento por ID":
         st.subheader("Eliminar Movimiento por ID")
