@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import json
@@ -20,9 +19,9 @@ def load_contracts():
             return json.load(f)
     except FileNotFoundError:
         contracts = {
-            "Depto A": 35000,
-            "Depto B": 40000,
-            "Local": 50000
+            "Alberdi": 35000,
+            "Av. Colón": 40000,
+            "Lote Fortunato": 50000
         }
         with open('contracts.json', 'w') as f:
             json.dump(contracts, f)
@@ -52,7 +51,7 @@ def main():
     contracts = load_contracts()
     settings = load_settings()
 
-    menu = ["Registrar Movimiento", "Actualizar Contrato", "Actualizar Dólar Blue", "Ver Balance"]
+    menu = ["Registrar Movimiento", "Actualizar Contrato", "Actualizar Dólar Blue", "Ver Balance", "Eliminar Movimiento"]
     choice = st.sidebar.selectbox("Menú", menu)
 
     if choice == "Registrar Movimiento":
@@ -67,7 +66,8 @@ def main():
         # Predefinidos y personalizados
         if tipo == "Egreso":
             concept = st.selectbox("Concepto", [
-                "Expensas", "ARBA", "Municipalidad", "ABL/Rentas", "VISA", "MasterCard", "Fee Asistente", "Otro gasto"
+                "Expensas Alberdi", "Expensas Av. Colón", "ARBA", "Municipalidad", "ABL/Rentas",
+                "VISA", "MasterCard", "Pago por gestión administrativa", "Otro gasto"
             ])
             if concept == "Otro gasto":
                 concept_manual = st.text_input("Describir el gasto")
@@ -128,6 +128,21 @@ def main():
         if settings.get('usd_rate'):
             balance_usd = balance_ars / settings['usd_rate']
             st.write(f"**Balance estimado en USD:** {balance_usd:.2f} USD")
+
+    elif choice == "Eliminar Movimiento":
+        st.subheader("Eliminar Movimiento")
+        if len(ledger) > 0:
+            ledger['display'] = ledger.apply(
+                lambda row: f"{row['date']} - {row['property']} - {row['type']} - {row['concept']} - ARS {row['amount_ars']}", axis=1)
+            selected = st.selectbox("Seleccioná el movimiento a eliminar", ledger['display'])
+            if st.button("Eliminar seleccionado"):
+                index_to_delete = ledger[ledger['display'] == selected].index
+                ledger.drop(index_to_delete, inplace=True)
+                ledger.drop(columns=['display'], inplace=True)
+                ledger.to_csv('ledger.csv', index=False)
+                st.success("Movimiento eliminado")
+        else:
+            st.info("No hay movimientos para eliminar.")
 
 if __name__ == "__main__":
     main()
