@@ -78,11 +78,16 @@ def main():
             ledger.to_csv('ledger.csv', index=False)
             st.success("Movimiento registrado")
 
-    elif choice == "Actualizar Contrato":
-        st.subheader("Actualizar Valores de Alquiler")
-        for prop in contracts:
-            new_value = st.number_input(f"Nuevo valor para {prop}", value=contracts[prop], format="%.0f")
-            contracts[prop] = new_value
+        elif choice == "Actualizar Contrato":
+            st.subheader("Actualizar Valores de Alquiler")
+            for prop in contracts:
+                new_value = st.number_input(
+                    f"Nuevo valor para {prop}",
+                    value=float(contracts[prop]),
+                    format="%.0f"
+                )
+                contracts[prop] = new_value
+        
         if st.button("Guardar Contratos"):
             with open('contracts.json', 'w') as f:
                 json.dump(contracts, f)
