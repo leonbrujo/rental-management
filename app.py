@@ -24,22 +24,6 @@ def load_contracts():
             json.dump(contracts, f)
         return contracts
 
-# Load or initialize settings
-def load_settings():
-    try:
-        with open('settings.json', 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        settings = {"usd_rate": None, "last_updated": None}
-        with open('settings.json', 'w') as f:
-            json.dump(settings, f)
-        return settings
-
-# Save settings
-def save_settings(settings):
-    with open('settings.json', 'w') as f:
-        json.dump(settings, f)
-
 # Format number with thousands separator
 def format_number(value):
     return f"{value:,.0f}".replace(",", ".")
@@ -50,9 +34,8 @@ def main():
 
     ledger = init_ledger()
     contracts = load_contracts()
-    settings = load_settings()
 
-    menu = ["Registrar Movimiento", "Actualizar Contrato", "Actualizar Dólar Blue", "Comprar Dólares", "Ver Balance", "Eliminar Movimiento por ID"]
+    menu = ["Registrar Movimiento", "Actualizar Contrato", "Comprar Dólares", "Ver Balance", "Eliminar Movimiento por ID"]
     choice = st.sidebar.selectbox("Menú", menu)
 
     if choice == "Registrar Movimiento":
@@ -105,16 +88,6 @@ def main():
                 json.dump(contracts, f)
             st.success("Contratos actualizados")
 
-    elif choice == "Actualizar Dólar Blue":
-        st.subheader("Actualizar cotización del dólar blue")
-        st.write(f"Última cotización registrada: {settings.get('usd_rate')} ARS/USD")
-        new_rate = st.number_input("Nuevo valor del dólar blue", min_value=0.0, format="%.2f")
-        if st.button("Actualizar Dólar"):
-            settings['usd_rate'] = new_rate
-            settings['last_updated'] = datetime.now().strftime('%Y-%m-%d')
-            save_settings(settings)
-            st.success("Dólar actualizado")
-
     elif choice == "Comprar Dólares":
         st.subheader("Comprar Dólares con ARS")
         total_ars = ledger[ledger['type'] == 'Ingreso']['amount_ars'].sum() - ledger[ledger['type'] == 'Egreso']['amount_ars'].sum()
@@ -155,10 +128,6 @@ def main():
         st.write(f"**Total Ingresos ARS:** {format_number(total_ingresos)}")
         st.write(f"**Total Egresos ARS:** {format_number(total_egresos)}")
         st.write(f"**Balance en ARS:** {format_number(balance_ars)}")
-
-        if settings.get('usd_rate'):
-            balance_usd = balance_ars / settings['usd_rate']
-            st.write(f"**Balance estimado en USD:** {balance_usd:.2f} USD")
 
     elif choice == "Eliminar Movimiento por ID":
         st.subheader("Eliminar Movimiento por ID")
