@@ -35,7 +35,14 @@ def main():
     ledger = init_ledger()
     contracts = load_contracts()
 
-    menu = ["Registrar Movimiento", "Actualizar Contrato", "Comprar Dólares", "Ver Balance", "Eliminar Movimiento por ID"]
+    menu = [
+        "Registrar Movimiento",
+        "Actualizar Contrato",
+        "Comprar Dólares",
+        "Ver Balance",
+        "Ver Pagos de Servicios e Impuestos",
+        "Eliminar Movimiento por ID"
+    ]
     choice = st.sidebar.selectbox("Menú", menu)
 
     if choice == "Registrar Movimiento":
@@ -46,7 +53,18 @@ def main():
         date = st.date_input("Fecha del movimiento", value=datetime.now())
 
         if tipo == "Egreso":
-            concept = st.selectbox("Concepto", ["Expensas Alberdi", "Expensas Av. Colón", "ARBA", "Municipalidad", "ABL/Rentas", "VISA", "MasterCard", "Pago por gestión administrativa", "Otro gasto"])
+            concept = st.selectbox("Concepto", [
+                "Expensas",
+                "ARBA",
+                "ARM",
+                "Camuzzi Gas Pampeana",
+                "EDEA",
+                "OSSE",
+                "VISA",
+                "MasterCard",
+                "Pago por gestión administrativa",
+                "Otro gasto"
+            ])
             if concept == "Otro gasto":
                 concept_manual = st.text_input("Describir el gasto")
                 concept = concept_manual if concept_manual else "Otro gasto"
@@ -87,12 +105,11 @@ def main():
                 format="%.0f"
             )
             contracts[prop] = new_value
-    
+
         if st.button("Guardar Contratos"):
             with open('contracts.json', 'w') as f:
                 json.dump(contracts, f)
             st.success("Contratos actualizados")
-
 
     elif choice == "Comprar Dólares":
         st.subheader("Comprar Dólares con ARS")
@@ -126,16 +143,39 @@ def main():
         st.subheader("Balance y Historial")
         st.write("Movimientos registrados:")
         st.dataframe(ledger)
-    
+
         total_ingresos = ledger[ledger['type'] == 'Ingreso']['amount_ars'].sum()
         total_egresos = ledger[ledger['type'] == 'Egreso']['amount_ars'].sum()
         balance_ars = total_ingresos - total_egresos
         total_usd = ledger['amount_usd'].sum()
-    
+
         st.write(f"**Total Ingresos ARS:** {format_number(total_ingresos)}")
         st.write(f"**Total Egresos ARS:** {format_number(total_egresos)}")
         st.write(f"**Balance en ARS:** {format_number(balance_ars)}")
         st.write(f"**Balance en USD:** {total_usd:.2f} USD")
+
+    elif choice == "Ver Pagos de Servicios e Impuestos":
+        st.subheader("Pagos de Servicios e Impuestos")
+
+        empresas = ["ARBA", "ARM", "Camuzzi Gas Pampeana", "EDEA", "OSSE", "Expensas", "VISA", "MasterCard", "Pago por gestión administrativa"]
+        filtro_empresa = st.selectbox("Empresa / Servicio", ["Todos"] + empresas)
+        filtro_propiedad = st.selectbox("Propiedad", ["Todas"] + list(contracts.keys()) + ["General"])
+        fecha_inicio = st.date_input("Desde", value=datetime(2024, 1, 1))
+        fecha_fin = st.date_input("Hasta", value=datetime.now())
+
+        df = ledger.copy()
+        df['date'] = pd.to_datetime(df['date'])
+        df = df[df['type'] == 'Egreso']
+
+        if filtro_empresa != "Todos":
+            df = df[df['concept'] == filtro_empresa]
+        if filtro_propiedad != "Todas":
+            df = df[df['property'] == filtro_propiedad]
+
+        df = df[(df['date'] >= pd.to_datetime(fecha_inicio)) & (df['date'] <= pd.to_datetime(fecha_fin))]
+
+        st.write(f"Se encontraron {len(df)} registros:")
+        st.dataframe(df.sort_values(by="date", ascending=False))
 
     elif choice == "Eliminar Movimiento por ID":
         st.subheader("Eliminar Movimiento por ID")
